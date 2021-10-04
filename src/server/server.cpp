@@ -159,8 +159,6 @@ void CConnection::addToIncomingMessageQueue()
 {
 	m_qMessagesIn.push_back({ this->shared_from_this(), m_msgTemporaryIn });
 
-	std::cout << "AddToInc: msg: " << m_qMessagesIn.back().msg << std::endl;
-
 	readData();
 }
 
@@ -220,10 +218,8 @@ size_t CConnection::readData()
 		return res;
 	}
 
-	//std::vector<char> data(128);
-
-	asio::async_read(m_socket, asio::buffer(&m_msgTemporaryIn, m_msgTemporaryIn.size()),
-		[this/*, data*/](std::error_code ec, std::size_t length)
+	asio::async_read(m_socket, m_incomMsgBuff,
+		[this](std::error_code ec, std::size_t length)
 		{
 			if (!ec)
 			{
@@ -231,9 +227,9 @@ size_t CConnection::readData()
 				// has a body to follow...
 				if (length > 0)
 				{
-					std::cout << "Data for client has been read succesfully! " << length << std::endl;
-					//for (char c: data)
-					//	std::cout << c << std::endl;
+					//std::cout << "Data for client has been read succesfully! " << length << std::endl;
+					std::istream s(&this->m_incomMsgBuff);
+					s >> m_msgTemporaryIn;
 					addToIncomingMessageQueue();
 				}
 				else

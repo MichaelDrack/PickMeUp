@@ -147,7 +147,7 @@ class CConnection : public std::enable_shared_from_this<CConnection>
 {
 	public:
 		CConnection(asio::io_context& asioContext, asio::ip::tcp::socket socket, tsqueue<owned_message>& qIn):
-			m_asioContext(asioContext), m_socket(std::move(socket)), m_qMessagesIn(qIn)
+			m_asioContext(asioContext), m_socket(std::move(socket)), m_qMessagesIn(qIn), m_incomMsgBuff(16)
 		{
 			m_nHandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
 
@@ -184,6 +184,7 @@ class CConnection : public std::enable_shared_from_this<CConnection>
 		tsqueue<owned_message>& m_qMessagesIn;
 		tsqueue<std::string> m_qMessagesOut;
 
+		asio::streambuf m_incomMsgBuff;
 		std::string m_msgTemporaryIn;
 
 		uint64_t m_nHandshakeOut = 0;
