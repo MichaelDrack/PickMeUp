@@ -1,9 +1,12 @@
 #include <iostream>
 #include "server.h"
+#include "logger/logger.h"
 
 #include <asio.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
+
+#define LOG_HEADER "[SERVER]"
 
 void CServer::update()
 {
@@ -30,7 +33,7 @@ void CServer::listen_connections()
 			if (!ec)
 			{
 				// Display some useful(?) information
-				std::cout << "[SERVER] New Connection: " << socket.remote_endpoint() << "\n";
+				XPRINT("New Connection: ", socket.remote_endpoint());
 
 				//Create a new connection to handle this client
 				std::shared_ptr<CConnection> newconn = std::make_shared<CConnection>(m_asioContext, std::move(socket), m_qMessagesIn);
@@ -42,7 +45,7 @@ void CServer::listen_connections()
 			else
 			{
 				// Error has occurred during acceptance
-				std::cout << "[SERVER] New Connection Error: " << ec.message() << "\n";
+				XPRINT("New Connection Error: ", ec.message());
 			}
 
 			this->listen_connections();
@@ -86,7 +89,7 @@ bool CServer::start()
 		return false;
 	}
 
-	std::cout << "[SERVER] Started!\n";
+	XPRINT("Started!");
 	return true;
 }
 
@@ -97,7 +100,7 @@ void CConnection::writeValidation()
 		{
 			if (!ec)
 			{
-				std::cout << "[" << id << "] Validation sent, let`s wait for a response" << std::endl;
+				XPRINT("[", id, "] Validation sent, let`s wait for a response");
 				// Validation data sent, clients should sit and wait
 				// for a response (or a closure)
 			}
@@ -119,7 +122,7 @@ void CConnection::readValidation(CServer *server)
 				//if (m_nHandshakeIn == m_nHandshakeCheck)
 				{
 					// Client has provided valid solution, so allow it to connect properly
-					std::cout << "Client Validated" << std::endl;
+					XPRINT("Client Validated");
 					server->OnClientValidated(this->shared_from_this());
 
 					// Sit waiting to receive data now
@@ -128,13 +131,13 @@ void CConnection::readValidation(CServer *server)
 			//	else
 			//	{
 					// Client gave incorrect data, so disconnect
-			//		std::cout << "Client Disconnected (Fail Validation)" << std::endl;
+			//		XPRINT("Client Disconnected (Fail Validation)");
 			//		m_socket.close();
 			//	}
 			} else
 			{
 				// Some biggerfailure occured
-				std::cout << "Client Disconnected (ReadValidation)" << std::endl;
+				XPRINT("Client Disconnected (ReadValidation)");
 				m_socket.close();
 			}
 		});
@@ -144,7 +147,7 @@ void CConnection::connectToClient(CServer *server, uint32_t uid)
 {
 	if (!m_socket.is_open())
 	{
-		std::cout << "ERROR: socket is not open, restart server" << std::endl;
+		XPRINT("ERROR: socket is not open, restart server");
 		return;
 	}
 
@@ -183,7 +186,7 @@ void CConnection::writeData()
 			else
 			{
 				// Sending failed, see WriteHeader() equivalent for description :P
-				std::cout << "[" << id << "] Write Body Fail.\n";
+				XPRINT("[", id,"] Write Body Fail.");
 				m_socket.close();
 			}
 		});
@@ -214,7 +217,7 @@ size_t CConnection::readData()
 
 	if (!m_socket.is_open())
 	{
-		std::cout << "[CONNECTION] Cannot read data, socket is closet(((" << std::endl;
+		XPRINT("[CONNECTION] Cannot read data, socket is closet(((");
 		return res;
 	}
 
@@ -227,7 +230,7 @@ size_t CConnection::readData()
 				// has a body to follow...
 				if (length > 0)
 				{
-					//std::cout << "Data for client has been read succesfully! " << length << std::endl;
+					XPRINT("Data for client has been read succesfully! ", length);
 					std::istream s(&this->m_incomMsgBuff);
 					s >> std::noskipws;
 					std::getline(s, m_msgTemporaryIn);
@@ -235,7 +238,7 @@ size_t CConnection::readData()
 				}
 				else
 				{
-					std::cout << "Data for client has been read, but it`s empty" << std::endl;
+					XPRINT("Data for client has been read, but it`s empty");
 					readData();
 				}
 			}
@@ -243,7 +246,7 @@ size_t CConnection::readData()
 			{
 				// Reading form the client went wrong, most likely a disconnect
 				// has occurred. Close the socket and let the system tidy it up later.
-				std::cout << "[ Read Header Fail.\n";
+				XPRINT("Read Header Fail.");
 				m_socket.close();
 			}
 		});

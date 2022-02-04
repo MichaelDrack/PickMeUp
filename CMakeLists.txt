@@ -16,8 +16,9 @@ message("CMAKE_SOURCE_DIR          ${CMAKE_SOURCE_DIR}/asio/include")
 include_directories(${SOURCE_DIR})					# HEADER FILES
 add_executable(main ${MAIN_PATH}/${EXEC_SRC})
 add_subdirectory(${SOURCE_DIR}/server)				# Добавление подпроекта, указывается имя дирректории
+add_subdirectory(${SOURCE_DIR}/logger)
 
 target_link_libraries(asio INTERFACE pthread)
 
-target_link_libraries(main asio server)		# Линковка программы с библиотекой
+target_link_libraries(main asio server logger)		# Линковка программы с библиотекой
 
