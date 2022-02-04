@@ -218,7 +218,7 @@ size_t CConnection::readData()
 		return res;
 	}
 
-	asio::async_read(m_socket, m_incomMsgBuff,
+	asio::async_read(m_socket, m_incomMsgBuff, asio::transfer_exactly(3),
 		[this](std::error_code ec, std::size_t length)
 		{
 			if (!ec)
@@ -229,7 +229,8 @@ size_t CConnection::readData()
 				{
 					//std::cout << "Data for client has been read succesfully! " << length << std::endl;
 					std::istream s(&this->m_incomMsgBuff);
-					s >> m_msgTemporaryIn;
+					s >> std::noskipws;
+					std::getline(s, m_msgTemporaryIn);
 					addToIncomingMessageQueue();
 				}
 				else
