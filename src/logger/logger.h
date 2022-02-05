@@ -8,8 +8,8 @@
 #define LOG_HEADER "[LOGGER]"
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define XINFO(msg, ...) Logger::log(LOG_HEADER, msg, #__VA_ARGS__)
-#define XPRINT(msg, ...) Logger::print(LOG_HEADER, msg, #__VA_ARGS__)
+#define XINFO(msg, ...) Logger::log(__FILENAME__, __LINE__, LOG_HEADER, msg, ##__VA_ARGS__)
+#define XPRINT(msg, ...) Logger::print(__FILENAME__, __LINE__, LOG_HEADER, msg, ##__VA_ARGS__)
 
 class Logger
 {
@@ -23,9 +23,9 @@ public:
 			print("Fuck! Unable to open syslog file");
 			return;
 		}
-		os << __TIME__ << " " << __FILENAME__ << ":" << __LINE__ << " "  << std::forward<T>(var1);
+		os <<__DATE__ << " " <<__TIME__ << " " << std::forward<T>(var1) << ":";
 		using expander = int[];
-		(void)expander{0, (void(os << ' ' << std::forward<Types>(var2)), 0)...};
+		(void)expander{0, (void(os << std::forward<Types>(var2) << " "), 0)...};
 
 		os << std::endl;
 	}
@@ -40,12 +40,14 @@ public:
 	template <typename T, typename... Types>
 	static void print(T var1, Types... var2)
 	{
-		std::cout << __TIME__ << " " << __FILENAME__ << ":" << __LINE__ << " "  << std::forward<T>(var1);
+		std::cout << __DATE__ << " " <<__TIME__ << " " << std::forward<T>(var1) << ":";
 
 		using expander = int[];
-		(void)expander{0, (void(std::cout << std::forward<Types>(var2)), 0)...};
+		(void)expander{0, (void(std::cout << std::forward<Types>(var2) << " "), 0)...};
 
 		std::cout << std::endl;
+
+		log(var1, var2...);
 	}
 
 	static void init(std::string syslogFileName, std::string operatorLogFileName);
